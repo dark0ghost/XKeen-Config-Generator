@@ -82,11 +82,11 @@
                                     "vnext": [
                                         {
                                             "address": vmessConfig.add,    // IP адрес или доменное имя сервера
-                                            "port": vmessConfig.port,      // Порт сервера
+                                            "port": parseInt(vmessConfig.port),      // Порт сервера - преобразуем в число
                                             "users": [
                                                 {
                                                     "id": vmessConfig.id,    // UUID пользователя
-                                                    "alterId": vmessConfig.aid || 0,  // Альтернативный ID (по умолчанию 0)
+                                                    "alterId": parseInt(vmessConfig.aid) || 0,  // Альтернативный ID (по умолчанию 0)
                                                     "security": vmessConfig.scy || "auto", // Метод шифрования
                                                     "level": 0
                                                 }
@@ -104,9 +104,7 @@
                                     } : undefined,
                                     "wsSettings": vmessConfig.net === "ws" ? {
                                         "path": vmessConfig.path || "",
-                                        "headers": {
-                                            "Host": vmessConfig.host || ""
-                                        }
+                                        "host": vmessConfig.host || ""
                                     } : undefined,
                                     "httpSettings": vmessConfig.net === "h2" ? {
                                         "host": vmessConfig.host ? vmessConfig.host.split(',') : [],
