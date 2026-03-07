@@ -4,194 +4,104 @@ import { FileService } from './FileService.js';
 import { ClipboardService } from './ClipboardService.js';
 
 /**
- * Main service for config generation and management
- * Implements Facade pattern
+ * Main service for config generation and management (Facade pattern)
  */
 export class ConfigService {
-    /**
-     * @type {ParserFactory}
-     * @private
-     */
-    #parserFactory;
-
-    /**
-     * @type {NotificationService}
-     * @private
-     */
-    #notificationService;
-
-    /**
-     * @type {FileService}
-     * @private
-     */
-    #fileService;
-
-    /**
-     * @type {ClipboardService}
-     * @private
-     */
-    #clipboardService;
-
-    /**
-     * @type {Object|null}
-     * @private
-     */
-    #currentConfig = null;
-
-    /**
-     * @type {string}
-     * @private
-     */
-    #currentOutput = '';
-
-    /**
-     * @type {Array}
-     * @private
-     */
-    #currentWarnings = [];
-
-    /**
-     * Create config service with dependencies
-     * @param {Object} options - Service options
-     * @param {NotificationService} options.notificationService
-     * @param {FileService} options.fileService
-     * @param {ClipboardService} options.clipboardService
-     */
     constructor({
         notificationService = new NotificationService(),
         fileService = new FileService(),
         clipboardService = new ClipboardService()
     } = {}) {
-        this.#parserFactory = new ParserFactory();
-        this.#notificationService = notificationService;
-        this.#fileService = fileService;
-        this.#clipboardService = clipboardService;
+        this.parserFactory = new ParserFactory();
+        this.notificationService = notificationService;
+        this.fileService = fileService;
+        this.clipboardService = clipboardService;
+        this._currentConfig = null;
+        this._currentOutput = '';
+        this._currentWarnings = [];
     }
 
-    /**
-     * Get current configuration
-     * @returns {Object|null} Current config
-     */
     get currentConfig() {
-        return this.#currentConfig;
+        return this._currentConfig;
     }
 
-    /**
-     * Get current output string
-     * @returns {string} Formatted config JSON
-     */
     get currentOutput() {
-        return this.#currentOutput;
+        return this._currentOutput;
     }
 
-    /**
-     * Get current warnings
-     * @returns {Array} Warnings array
-     */
     get currentWarnings() {
-        return this.#currentWarnings;
+        return this._currentWarnings;
     }
 
-    /**
-     * Check if there's a valid config
-     * @returns {boolean} Has config
-     */
     hasConfig() {
-        return this.#currentConfig !== null;
+        return this._currentConfig !== null;
     }
 
-    /**
-     * Generate configuration from URL
-     * @param {string} url - Proxy URL to parse
-     * @returns {ConfigService} This instance for chaining
-     */
     generate(url) {
         const trimmedUrl = url.trim();
 
         if (!trimmedUrl) {
-            this.#reset();
+            this.reset();
             return this;
         }
 
-        const result = this.#parserFactory.parse(trimmedUrl);
+        const result = this.parserFactory.parse(trimmedUrl);
 
         if (result.success) {
-            this.#currentConfig = result.config;
-            this.#currentOutput = JSON.stringify(result.config, null, 4);
-            this.#currentWarnings = result.warnings;
+            this._currentConfig = result.config;
+            this._currentOutput = JSON.stringify(result.config, null, 4);
+            this._currentWarnings = result.warnings;
 
             if (result.warnings.length > 0) {
                 result.warnings.forEach(w =>
-                    this.#notificationService.show(w, NotificationType.WARNING, 5000)
+                    this.notificationService.show(w, NotificationType.WARNING, 5000)
                 );
             }
         } else {
-            this.#reset();
-            this.#notificationService.error(result.error || 'Ошибка генерации');
+            this.reset();
+            this.notificationService.error(result.error || 'Ошибка генерации');
         }
 
         return this;
     }
 
-    /**
-     * Reset current state
-     * @private
-     */
-    #reset() {
-        this.#currentConfig = null;
-        this.#currentOutput = '';
-        this.#currentWarnings = [];
+    reset() {
+        this._currentConfig = null;
+        this._currentOutput = '';
+        this._currentWarnings = [];
     }
 
-    /**
-     * Save current config to file
-     * @param {string} filename - File name
-     * @returns {boolean} Success status
-     */
     saveToFile(filename = '04_outbounds.json') {
-        if (!this.#currentConfig) {
-            this.#notificationService.error('Сначала сгенерируйте конфигурацию');
+        if (!this._currentConfig) {
+            this.notificationService.error('Сначала сгенерируйте конфигурацию');
             return false;
         }
 
-        this.#fileService.downloadJson(this.#currentConfig, filename);
-        this.#notificationService.success('Файл сохранён!');
+        this.fileService.downloadJson(this._currentConfig, filename);
+        this.notificationService.success('Файл сохранён!');
         return true;
     }
 
-    /**
-     * Copy current config to clipboard
-     * @returns {Promise<boolean>} Success status
-     */
     async copyToClipboard() {
-        if (!this.#currentOutput) {
-            this.#notificationService.error('Нечего копировать');
+        if (!this._currentOutput) {
+            this.notificationService.error('Нечего копировать');
             return false;
         }
 
-        const success = await this.#clipboardService.copy(this.#currentOutput);
+        const success = await this.clipboardService.copy(this._currentOutput);
         if (success) {
-            this.#notificationService.success('Скопировано в буфер обмена!');
+            this.notificationService.success('Скопировано в буфер обмена!');
         } else {
-            this.#notificationService.error('Не удалось скопировать');
+            this.notificationService.error('Не удалось скопировать');
         }
         return success;
     }
 
-    /**
-     * Get supported protocols
-     * @returns {string[]} Array of protocol names
-     */
     getSupportedProtocols() {
-        return this.#parserFactory.getSupportedProtocols();
+        return this.parserFactory.getSupportedProtocols();
     }
 
-    /**
-     * Subscribe to notifications
-     * @param {Function} callback - Notification callback
-     * @returns {Function} Unsubscribe function
-     */
     subscribeToNotifications(callback) {
-        return this.#notificationService.subscribe(callback);
+        return this.notificationService.subscribe(callback);
     }
 }

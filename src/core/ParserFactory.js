@@ -3,21 +3,11 @@ import { VlessTrojanParser } from './VlessTrojanParser.js';
 import { ShadowsocksParser } from './ShadowsocksParser.js';
 
 /**
- * Factory class for creating URL parsers
- * Implements Factory pattern
+ * Factory class for creating URL parsers (Factory pattern)
  */
 export class ParserFactory {
-    /**
-     * @type {BaseParser[]}
-     * @private
-     */
-    #parsers;
-
-    /**
-     * Create parser factory with default parsers
-     */
     constructor() {
-        this.#parsers = [
+        this.parsers = [
             new VmessParser(),
             new VlessTrojanParser(),
             new ShadowsocksParser()
@@ -26,11 +16,11 @@ export class ParserFactory {
 
     /**
      * Get appropriate parser for the URL
-     * @param {string} url - URL to parse
-     * @returns {BaseParser|null} Parser instance or null
+     * @param {string} url
+     * @returns {BaseParser|null}
      */
     getParser(url) {
-        for (const parser of this.#parsers) {
+        for (const parser of this.parsers) {
             if (parser.canParse(url)) {
                 return parser;
             }
@@ -40,8 +30,8 @@ export class ParserFactory {
 
     /**
      * Parse URL using appropriate parser
-     * @param {string} url - URL to parse
-     * @returns {ParseResult} Parse result
+     * @param {string} url
+     * @returns {ParseResult}
      */
     parse(url) {
         const parser = this.getParser(url);
@@ -57,24 +47,23 @@ export class ParserFactory {
     }
 
     /**
-     * Add custom parser to the factory
-     * @param {BaseParser} parser - Parser instance to add
+     * Add custom parser
+     * @param {BaseParser} parser
      */
     addParser(parser) {
         if (!(parser instanceof BaseParser)) {
             throw new Error('Parser must extend BaseParser');
         }
-        this.#parsers.push(parser);
+        this.parsers.push(parser);
     }
 
     /**
-     * Get list of supported protocols
-     * @returns {string[]} Array of protocol names
+     * Get supported protocols
+     * @returns {string[]}
      */
     getSupportedProtocols() {
-        return this.#parsers.map(parser => {
-            const name = parser.constructor.name;
-            return name.replace('Parser', '').toLowerCase();
+        return this.parsers.map(parser => {
+            return parser.constructor.name.replace('Parser', '').toLowerCase();
         });
     }
 }
