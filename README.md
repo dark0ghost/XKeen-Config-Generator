@@ -12,7 +12,8 @@ Web application for generating proxy configurations from URLs (VLESS, VMess, Tro
   - Shadowsocks
 - Dark/Light theme toggle
 - Save configuration to JSON file
-- Built for GitLab Pages deployment
+- Copy to clipboard
+- Built for GitLab Pages & GitHub Pages deployment
 
 ## Development
 
@@ -47,15 +48,24 @@ npm run lint
 
 ## Deployment
 
+### GitHub Pages
+
+The project includes GitHub Actions workflow for automatic deployment:
+
+1. Go to repository **Settings → Pages**
+2. Set **Source** to "GitHub Actions"
+3. Push to `main` branch
+
+Your site will be available at: `https://<username>.github.io/<repository>/`
+
 ### GitLab Pages
 
-The project is configured for automatic deployment to GitLab Pages. Push to the default branch and GitLab CI will:
+The project includes `.gitlab-ci.yml` for automatic deployment:
 
-1. Install dependencies
-2. Build the project
-3. Deploy to GitLab Pages
+1. Push to GitLab repository
+2. CI/CD pipeline will build and deploy automatically
 
-Your site will be available at: `https://<username>.gitlab.io/<project-name>/`
+Your site will be available at: `https://<username>.gitlab.io/<project>/`
 
 ### Manual deployment
 
@@ -67,17 +77,51 @@ npm run build
 ## Project Structure
 
 ```
-├── index.html          # Main HTML file
+├── index.html              # Main HTML file (entry point)
+├── .github/
+│   └── workflows/
+│       └── deploy.yml      # GitHub Actions workflow
+├── .gitlab-ci.yml          # GitLab CI/CD configuration
 ├── src/
-│   ├── app.js          # Application logic
-│   ├── main.js         # Core functions (config generation)
-│   └── styles.css      # Styles
-├── public/             # Static assets (if needed)
-├── dist/               # Build output
+│   ├── main.js             # Vue app entry point
+│   ├── styles.css          # Global styles
+│   ├── index.js            # Barrel exports
+│   ├── core/               # Core parsing logic
+│   │   ├── BaseParser.js       # Abstract base class
+│   │   ├── VmessParser.js      # VMess parser
+│   │   ├── VlessTrojanParser.js # VLESS/Trojan parser
+│   │   ├── ShadowsocksParser.js # Shadowsocks parser
+│   │   └── ParserFactory.js    # Factory pattern
+│   ├── services/           # Application services
+│   │   ├── ConfigService.js      # Facade for config generation
+│   │   ├── NotificationService.js # Observer pattern
+│   │   ├── ThemeService.js       # Singleton pattern
+│   │   ├── FileService.js        # File operations
+│   │   └── ClipboardService.js   # Clipboard operations
+│   └── components/
+│       └── App.vue         # Main Vue component
+├── dist/                   # Build output
 ├── package.json
-├── vite.config.js
-└── .gitlab-ci.yml
+└── vite.config.js
 ```
+
+## Architecture
+
+### Design Patterns
+
+| Pattern | Implementation |
+|---------|---------------|
+| **Strategy** | `BaseParser` + concrete parsers |
+| **Factory** | `ParserFactory` creates parsers |
+| **Singleton** | `ThemeService.getInstance()` |
+| **Observer** | `NotificationService.subscribe()` |
+| **Facade** | `ConfigService` unifies services |
+
+### SOLID Principles
+
+- **Single Responsibility**: Each class has one purpose
+- **Dependency Injection**: Services injected into components
+- **Encapsulation**: Private fields with `#` syntax
 
 ## License
 
