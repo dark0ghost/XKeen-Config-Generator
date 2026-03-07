@@ -8,7 +8,7 @@
       <button
         id="theme-toggle"
         @click="handleThemeToggle"
-        :title="themeService.isDark() ? 'Switch to light' : 'Switch to dark'"
+        :title="isDark ? 'Switch to light' : 'Switch to dark'"
       >
         🌓
       </button>
@@ -94,6 +94,7 @@ export default {
         message: '',
         type: 'success'
       },
+      isDark: true,
       // Services (dependency injection)
       themeService: null,
       configService: null,
@@ -111,6 +112,11 @@ export default {
       notificationService: this.notificationService
     });
 
+    // Subscribe to theme changes
+    this.themeService.subscribe((theme) => {
+      this.isDark = theme === 'dark';
+    });
+
     // Subscribe to notifications
     this.notificationService.subscribe(({ type, message }) => {
       this.showToast(message, type);
@@ -121,7 +127,8 @@ export default {
    * Initialize theme on mount
    */
   mounted() {
-    this.themeService.init();
+    const theme = this.themeService.init();
+    this.isDark = theme === 'dark';
   },
 
   methods: {
