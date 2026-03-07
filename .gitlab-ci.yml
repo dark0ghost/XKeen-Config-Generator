@@ -1,0 +1,48 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+  CI_DEBUG_TRACE: "false"
+
+build:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - echo "🔧 Installing dependencies..."
+    - npm ci --only=production
+    - echo "📦 Building project..."
+    - npm run build
+    - echo "📁 Preparing for deployment..."
+    - mv dist public
+  artifacts:
+    paths:
+      - public/
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "🚀 Deploying to GitLab Pages..."
+    - echo "✅ Deployment complete!"
+  artifacts:
+    paths:
+      - public/
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - build
+  environment:
+    name: production
+    url: https://${CI_PROJECT_PATH}.gitlab.io/
