@@ -74,37 +74,6 @@ npm run build
 # Upload contents of dist/ folder to your hosting
 ```
 
-## Project Structure
-
-```
-├── index.html              # Main HTML file (entry point)
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # GitHub Actions workflow
-├── .gitlab-ci.yml          # GitLab CI/CD configuration
-├── src/
-│   ├── main.js             # Vue app entry point
-│   ├── styles.css          # Global styles
-│   ├── index.js            # Barrel exports
-│   ├── core/               # Core parsing logic
-│   │   ├── BaseParser.js       # Abstract base class
-│   │   ├── VmessParser.js      # VMess parser
-│   │   ├── VlessTrojanParser.js # VLESS/Trojan parser
-│   │   ├── ShadowsocksParser.js # Shadowsocks parser
-│   │   └── ParserFactory.js    # Factory pattern
-│   ├── services/           # Application services
-│   │   ├── ConfigService.js      # Facade for config generation
-│   │   ├── NotificationService.js # Observer pattern
-│   │   ├── ThemeService.js       # Singleton pattern
-│   │   ├── FileService.js        # File operations
-│   │   └── ClipboardService.js   # Clipboard operations
-│   └── components/
-│       └── App.vue         # Main Vue component
-├── dist/                   # Build output
-├── package.json
-└── vite.config.js
-```
-
 ## License
 
 MIT
