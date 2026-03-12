@@ -1,28 +1,48 @@
 <template>
   <div class="container">
     <header>
-      <h1>
-        <span class="icon">⚡</span>
-        XKeen Config Generator
-      </h1>
-      <button
-        id="theme-toggle"
-        @click="handleThemeToggle"
-        :title="isDark ? 'Switch to light' : 'Switch to dark'"
-      >
-        🌓
-      </button>
+      <div class="header-left">
+        <h1>
+          <span class="icon">⚡</span>
+          {{ t('app.title') }}
+        </h1>
+        <p class="subtitle">{{ t('app.subtitle') }}</p>
+      </div>
+      <div class="header-right">
+        <a
+          :href="'./docs/index.html?lang=' + currentLang"
+          class="nav-link"
+          :title="t('nav.documentation')"
+          target="_blank"
+        >
+          📖 <span class="nav-text">{{ t('nav.documentation') }}</span>
+        </a>
+        <button
+          class="lang-toggle"
+          @click="toggleLanguage"
+          :title="'Switch language'"
+        >
+          {{ currentLang === 'ru' ? 'RU' : 'EN' }}
+        </button>
+        <button
+          id="theme-toggle"
+          @click="handleThemeToggle"
+          :title="isDark ? 'Switch to light' : 'Switch to dark'"
+        >
+          🌓
+        </button>
+      </div>
     </header>
 
     <main>
       <div class="main-card">
         <div class="form-group">
-          <label for="url">Proxy URLs (одна или несколько ссылок)</label>
+          <label for="url">{{ t('form.urlLabel') }}</label>
           <textarea
             id="url"
             v-model="url"
             @keyup.ctrl.enter="handleGenerate"
-            placeholder="vless://, vmess://, trojan://, ss://&#10;Можно вставить несколько ссылок (каждая с новой строки)"
+            :placeholder="t('form.urlPlaceholder')"
             rows="5"
           ></textarea>
         </div>
@@ -30,15 +50,15 @@
         <div class="button-group">
           <button id="generate-btn" @click="handleGenerate">
             <span class="icon">🔧</span>
-            Сгенерировать конфиг
+            {{ t('form.generateBtn') }}
           </button>
           <button id="save-btn" @click="handleSave" :disabled="!configService.hasConfig()">
             <span class="icon">💾</span>
-            Сохранить в файл
+            {{ t('form.saveBtn') }}
           </button>
           <button id="load-btn" @click="triggerFileLoad">
             <span class="icon">📂</span>
-            Загрузить из файла
+            {{ t('form.loadBtn') }}
           </button>
           <input
             type="file"
@@ -64,14 +84,14 @@
 
       <div class="main-card output-container">
         <div class="output-header">
-          <span class="output-label">JSON Output</span>
+          <span class="output-label">{{ t('output.label') }}</span>
           <button class="copy-btn" @click="handleCopy">
             <span class="icon">📋</span>
-            Копировать
+            {{ t('form.copyBtn') }}
           </button>
         </div>
         <pre v-if="output">{{ output }}</pre>
-        <pre v-else>Здесь появится конфигурация...</pre>
+        <pre v-else>{{ t('output.placeholder') }}</pre>
       </div>
     </main>
 
@@ -85,6 +105,7 @@
 import { ConfigService } from '../services/ConfigService.js';
 import { ThemeService } from '../services/ThemeService.js';
 import { NotificationService, NotificationType } from '../services/NotificationService.js';
+import { I18nService } from '../i18n/index.js';
 
 export default {
   name: 'App',
@@ -107,10 +128,12 @@ export default {
         type: 'success'
       },
       isDark: true,
+      currentLang: 'ru',
       // Services (dependency injection)
       themeService: null,
       configService: null,
-      notificationService: null
+      notificationService: null,
+      i18nService: null
     };
   },
 
@@ -118,11 +141,15 @@ export default {
    * Initialize services on component creation
    */
   created() {
+    this.i18nService = I18nService.getInstance();
     this.themeService = ThemeService.getInstance();
     this.notificationService = new NotificationService();
     this.configService = new ConfigService({
       notificationService: this.notificationService
     });
+
+    // Initialize language
+    this.currentLang = this.i18nService.getLanguage();
 
     // Subscribe to theme changes
     this.themeService.subscribe((theme) => {
@@ -132,6 +159,11 @@ export default {
     // Subscribe to notifications
     this.notificationService.subscribe(({ type, message }) => {
       this.showToast(message, type);
+    });
+
+    // Subscribe to language changes
+    this.i18nService.subscribe((lang) => {
+      this.currentLang = lang;
     });
   },
 
@@ -145,11 +177,27 @@ export default {
 
   methods: {
     /**
+     * Translate key
+     * @param {string} key - Translation key
+     * @param {Object} params - Translation parameters
+     */
+    t(key, params = {}) {
+      return this.i18nService.t(key, params);
+    },
+
+    /**
+     * Toggle language
+     */
+    toggleLanguage() {
+      const newLang = this.currentLang === 'ru' ? 'en' : 'ru';
+      this.i18nService.setLanguage(newLang);
+    },
+    /**
      * Handle config generation
      */
     handleGenerate() {
       if (!this.url.trim()) {
-        this.setStatus('error', 'Введите ссылку');
+        this.setStatus('error', this.t('status.enterUrl'));
         this.output = '';
         this.warnings = [];
         return;
@@ -157,16 +205,16 @@ export default {
 
       // Разделяем ссылки по новой строке
       const urls = this.url.split('\n').filter(line => line.trim() !== '');
-      
+
       this.configService.generateMultiple(urls);
 
       this.output = this.configService.currentOutput;
       this.warnings = this.configService.currentWarnings;
 
       if (this.configService.hasConfig()) {
-        this.setStatus('success', `Сгенерировано ${urls.length} конфиг(ов)`);
+        this.setStatus('success', this.t('status.successMultiple', { count: urls.length }));
       } else {
-        this.setStatus('error', 'Ошибка генерации');
+        this.setStatus('error', this.t('status.error'));
         this.output = '';
         this.warnings = [];
       }
@@ -195,15 +243,15 @@ export default {
       if (!file) return;
 
       const result = await this.configService.loadFromFile(file);
-      
+
       if (result.success) {
         this.output = this.configService.currentOutput;
         this.warnings = this.configService.currentWarnings;
-        this.setStatus('success', `Загружено ${result.outboundCount} outbound(ов)`);
+        this.setStatus('success', this.t('status.loaded', { count: result.outboundCount }));
       } else {
         this.setStatus('error', result.error);
       }
-      
+
       // Очищаем input для возможности повторной загрузки того же файла
       event.target.value = '';
     },
@@ -258,6 +306,17 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 h1 {
@@ -267,6 +326,59 @@ h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0 2.5rem;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  background: var(--bg-tertiary);
+  text-decoration: none;
+}
+
+.nav-text {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .nav-text {
+    display: inline;
+  }
+}
+
+.lang-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.lang-toggle:hover {
+  background: var(--bg-tertiary);
 }
 
 h1 .icon {

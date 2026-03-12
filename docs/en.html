@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation — XKeen Config Generator</title>
+    <link rel="alternate" hreflang="en" href="en.html">
+    <link rel="alternate" hreflang="ru" href="index.html">
+    <link rel="alternate" hreflang="x-default" href="index.html">
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #333333;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-hover: #79b8ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --error: #f85149;
+            --border-color: #404040;
+        }
+
+        body.light-theme {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #f4f4f4;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --accent-primary: #0969da;
+            --accent-hover: #0550ae;
+            --border-color: #d0d7de;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .lang-switch a {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .lang-switch a.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .lang-switch a:hover:not(.active) {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            color: var(--accent-primary);
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .step {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+
+        .example {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+        }
+
+        .tip {
+            background: rgba(88, 166, 255, 0.15);
+            border-left: 4px solid var(--accent-primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .warning {
+            background: rgba(210, 153, 34, 0.15);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.875em;
+        }
+
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .protocol-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .protocol-card h4 {
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-tertiary);
+            transform: rotate(15deg);
+        }
+
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📖 Documentation</h1>
+            <div class="header-actions">
+                <div class="lang-switch">
+                    <a href="index.html">RU</a>
+                    <a href="en.html" class="active">EN</a>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+                <a href="../index.html" class="back-link">← Back</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="step">
+                <h2>🚀 Quick Start</h2>
+                <p>This tool helps you create proxy configuration from VLESS, VMess, Trojan, and Shadowsocks URLs.</p>
+            </div>
+
+            <h2>📋 How to Use</h2>
+            
+            <div class="step">
+                <p><span class="step-number">1</span><strong>Copy the proxy link</strong> (one or multiple)</p>
+            </div>
+
+            <div class="step">
+                <p><span class="step-number">2</span><strong>Paste the link</strong> into the field on the main page</p>
+                <div class="tip">
+                    💡 You can paste multiple links at once — each should be on a new line
+                </div>
+            </div>
+
+            <div class="step">
+                <p><span class="step-number">3</span><strong>Click the button</strong> "🔧 Generate Config"</p>
+            </div>
+
+            <div class="step">
+                <p><span class="step-number">4</span><strong>Copy the result</strong> or save to file</p>
+            </div>
+
+            <h2>🔗 Supported Protocols</h2>
+            
+            <div class="protocol-grid">
+                <div class="protocol-card">
+                    <h4>VLESS</h4>
+                    <p>Modern protocol with Reality and TLS support</p>
+                    <code>vless://...</code>
+                </div>
+                <div class="protocol-card">
+                    <h4>VMess</h4>
+                    <p>V2Ray protocol with encryption</p>
+                    <code>vmess://...</code>
+                </div>
+                <div class="protocol-card">
+                    <h4>Trojan</h4>
+                    <p>Lightweight and fast protocol</p>
+                    <code>trojan://...</code>
+                </div>
+                <div class="protocol-card">
+                    <h4>Shadowsocks</h4>
+                    <p>Classic proxy protocol</p>
+                    <code>ss://...</code>
+                </div>
+            </div>
+
+            <h2>📝 Example Links</h2>
+
+            <h3>VLESS Reality</h3>
+            <div class="example">vless://uuid@host:port?security=reality&pbk=...&sid=...&sni=...#Label</div>
+
+            <h3>VMess</h3>
+            <div class="example">vmess://base64(json_config)</div>
+
+            <h3>Trojan</h3>
+            <div class="example">trojan://password@host:port?security=tls&sni=...#Label</div>
+
+            <h3>Shadowsocks</h3>
+            <div class="example">ss://base64(method:password)@host:port#Label</div>
+
+            <h2>💡 Tips</h2>
+
+            <div class="tip">
+                <strong>✅ Use port 443</strong> — this ensures better compatibility and masks traffic as regular HTTPS
+            </div>
+
+            <div class="tip">
+                <strong>✅ Check your links</strong> — make sure the link is copied completely, without extra spaces
+            </div>
+
+            <div class="tip">
+                <strong>✅ Bulk import</strong> — you can paste 10-20 links at once, each on a new line
+            </div>
+
+            <h2>⚠️ Troubleshooting</h2>
+
+            <div class="warning">
+                <strong>"Protocol not supported"</strong> — make sure the link starts with vless://, vmess://, trojan://, or ss://
+            </div>
+
+            <div class="warning">
+                <strong>"Invalid URL format"</strong> — the link is corrupted or incomplete
+            </div>
+
+            <div class="warning">
+                <strong>"JSON error"</strong> when loading file — the file is corrupted or has wrong structure
+            </div>
+
+            <h2>📁 Configuration File Format</h2>
+            <p>Saved file has JSON structure:</p>
+            <div class="example">
+{
+  "outbounds": [
+    {
+      "tag": "proxy-name",
+      "protocol": "vless",
+      "settings": { ... },
+      "streamSettings": { ... }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole"
+    }
+  ]
+}
+</div>
+
+            <h2>🌐 Languages</h2>
+            <p>The application supports Russian and English. The language toggle is in the top bar.</p>
+
+            <h2>🎨 Themes</h2>
+            <p>Light and dark themes are available. The toggle 🌓 is in the top bar.</p>
+        </main>
+
+        <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary); font-size: 0.875rem;">
+            <p>XKeen Config Generator © 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const isLight = body.classList.contains('light-theme');
+            if (isLight) {
+                body.classList.remove('light-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-theme');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        })();
+
+        // Auto-redirect to Russian if browser language is Russian
+        (function() {
+            // Check if user explicitly chose language via link
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('lang');
+            
+            if (urlLang === 'ru') {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Only auto-redirect if no explicit choice was made
+            const savedLang = localStorage.getItem('lang');
+            
+            // Don't redirect if user already on their preferred page
+            const currentPage = window.location.pathname.split('/').pop();
+            
+            if (!savedLang) {
+                const browserLang = navigator.language.slice(0, 2);
+                if (browserLang === 'ru' && currentPage !== 'index.html') {
+                    window.location.href = 'index.html';
+                }
+            }
+        })();
+
+        // Handle language switch clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            const langLinks = document.querySelectorAll('.lang-switch a');
+            langLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href === 'index.html') {
+                        localStorage.setItem('lang', 'ru');
+                    } else {
+                        localStorage.setItem('lang', 'en');
+                    }
+                    // Let the link navigate normally
+                });
+            });
+        });
+    </script>
+</body>
+</html>
