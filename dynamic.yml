@@ -1,0 +1,44 @@
+# Traefik Dynamic Configuration
+http:
+  routers:
+    app-router:
+      entryPoints:
+        - web
+      service: app-service
+      rule: "PathPrefix(`/`)"
+      middlewares:
+        - security-headers
+        - compress
+
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+
+  services:
+    app-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"
+        healthCheck:
+          path: /
+          interval: 30s
+          timeout: 5s
+
+# TLS configuration (optional, for HTTPS)
+# tls:
+#   options:
+#     default:
+#       minVersion: VersionTLS12
+#       sniStrict: true

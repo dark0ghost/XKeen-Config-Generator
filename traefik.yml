@@ -1,0 +1,29 @@
+# Traefik Static Configuration
+api:
+  dashboard: false
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  file:
+    directory: "/etc/traefik"
+    watch: true
+
+# Logging
+log:
+  level: INFO
+
+# Access log
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  bufferingSize: 100
+
+# Metrics
+metrics:
+  prometheus:
+    entryPoint: "traefik"
+    addEntryPointsLabels: true
+    addServicesLabels: true
