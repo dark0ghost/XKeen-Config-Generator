@@ -15,11 +15,22 @@ export class ShadowsocksParser extends BaseParser {
      * @inheritDoc
      */
     parse(url) {
-        // eslint-disable-next-line no-unused-vars
-        const regex = /([a-z]+):\/\/([^@]+)@([^:]+):(\d+)/;
-        const match = url.match(regex);
-
-        if (!match) {
+        // Shadowsocks URL может быть в двух форматах:
+        // 1. ss://base64(method:password)@host:port#label
+        // 2. ss://method:password@host:port#label (редко)
+        
+        const hashIndex = url.indexOf('#');
+        let hash = '';
+        let urlWithoutHash = url;
+        
+        if (hashIndex !== -1) {
+            hash = url.substring(hashIndex);
+            urlWithoutHash = url.substring(0, hashIndex);
+        }
+        
+        // Извлекаем base64 часть до @
+        const at_index = urlWithoutHash.indexOf('@');
+        if (at_index === -1) {
             return {
                 config: null,
                 warnings: [],
@@ -27,12 +38,34 @@ export class ShadowsocksParser extends BaseParser {
                 error: 'Неверный формат ссылки'
             };
         }
-
-        const [, , address, portStr] = match;
+        
+        const userInfoEncoded = urlWithoutHash.substring(5, at_index); // после "ss://"
+        const hostPart = urlWithoutHash.substring(at_index + 1);
+        const [address, portStr] = hostPart.split(':');
         const port = parseInt(portStr, 10);
-        const { method, password } = this.parseUserInfo(url);
+        
+        // Декодируем method:password из base64
+        let method = 'aes-256-gcm';
+        let password = '';
+        
+        try {
+            const decoded = atob(userInfoEncoded);
+            const colonIndex = decoded.indexOf(':');
+            if (colonIndex !== -1) {
+                method = decoded.substring(0, colonIndex);
+                password = decoded.substring(colonIndex + 1);
+            } else {
+                method = decoded;
+            }
+        } catch (e) {
+            console.error('Error decoding base64:', e);
+        }
+        
+        const parsedUrl = new URL(urlWithoutHash + hash);
+        const params = new URLSearchParams(parsedUrl.search);
+        const tag = this.extractTag(params, parsedUrl.hash);
 
-        const outbound = this.createShadowsocksOutbound(address, port, method, password);
+        const outbound = this.createShadowsocksOutbound(address, port, method, password, tag);
         const config = this.createConfig([outbound]);
 
         return {
@@ -44,17 +77,36 @@ export class ShadowsocksParser extends BaseParser {
     }
 
     /**
-     * Parse user info from Shadowsocks URL
+     * Extract tag from URL parameters and hash
      * @private
-     * @param {string} url - Shadowsocks URL
-     * @returns {{method: string, password: string}} Method and password
+     * @param {URLSearchParams} params - URL parameters
+     * @param {string} hash - URL hash fragment
+     * @returns {string} Tag for outbound
      */
-    parseUserInfo(url) {
-        const parsedParams = new URLSearchParams(url.split('?')[1] || '');
-        return {
-            method: parsedParams.get('method') || 'aes-256-gcm',
-            password: parsedParams.get('password') || ''
-        };
+    extractTag(params, hash) {
+        // Сначала пробуем использовать hash (заголовок ссылки) для читаемости
+        if (hash && hash.length > 1) {
+            try {
+                return decodeURIComponent(hash.substring(1));
+            } catch (e) {
+                return hash.substring(1);
+            }
+        }
+
+        // Если hash нет, пробуем sid
+        const sid = params.get('sid');
+        if (sid) {
+            return sid;
+        }
+
+        // Если есть параметр remarks, используем его
+        const remarks = params.get('remarks');
+        if (remarks) {
+            return remarks;
+        }
+
+        // По умолчанию используем стандартный tag
+        return 'ss';
     }
 
     /**
@@ -64,11 +116,12 @@ export class ShadowsocksParser extends BaseParser {
      * @param {number} port - Server port
      * @param {string} method - Encryption method
      * @param {string} password - Password
+     * @param {string} tag - Outbound tag
      * @returns {Object} Shadowsocks outbound
      */
-    createShadowsocksOutbound(address, port, method, password) {
+    createShadowsocksOutbound(address, port, method, password, tag) {
         return {
-            tag: 'ss',
+            tag,
             protocol: 'shadowsocks',
             settings: {
                 servers: [

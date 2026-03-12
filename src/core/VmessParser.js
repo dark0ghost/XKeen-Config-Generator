@@ -20,7 +20,8 @@ export class VmessParser extends BaseParser {
             const decodedPayload = atob(base64Payload);
             const vmessConfig = JSON.parse(decodedPayload);
 
-            const outbound = this.createVmessOutbound(vmessConfig);
+            const tag = this.extractTag(vmessConfig);
+            const outbound = this.createVmessOutbound(vmessConfig, tag);
             const config = this.createConfig([outbound]);
 
             return {
@@ -41,14 +42,36 @@ export class VmessParser extends BaseParser {
     }
 
     /**
+     * Extract tag from VMess config
+     * @private
+     * @param {Object} vmessConfig - Parsed VMess configuration
+     * @returns {string} Tag for outbound
+     */
+    extractTag(vmessConfig) {
+        // Пробуем получить tag из параметра sid (если есть в расширенных данных)
+        if (vmessConfig.sid) {
+            return vmessConfig.sid;
+        }
+
+        // Если есть ps (описание сервера), используем его
+        if (vmessConfig.ps) {
+            return vmessConfig.ps;
+        }
+
+        // По умолчанию используем стандартный tag
+        return 'vless-reality';
+    }
+
+    /**
      * Create VMess outbound from parsed config
      * @private
      * @param {Object} vmessConfig - Parsed VMess configuration
+     * @param {string} tag - Outbound tag
      * @returns {Object} VMess outbound
      */
-    createVmessOutbound(vmessConfig) {
+    createVmessOutbound(vmessConfig, tag) {
         return {
-            tag: 'vless-reality',
+            tag,
             protocol: 'vmess',
             settings: {
                 vnext: [

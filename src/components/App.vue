@@ -17,14 +17,14 @@
     <main>
       <div class="main-card">
         <div class="form-group">
-          <label for="url">Proxy URL</label>
-          <input
-            type="text"
+          <label for="url">Proxy URLs (одна или несколько ссылок)</label>
+          <textarea
             id="url"
             v-model="url"
-            @keyup.enter="handleGenerate"
-            placeholder="vless://, vmess://, trojan://, ss://"
-          >
+            @keyup.ctrl.enter="handleGenerate"
+            placeholder="vless://, vmess://, trojan://, ss://&#10;Можно вставить несколько ссылок (каждая с новой строки)"
+            rows="5"
+          ></textarea>
         </div>
 
         <div class="button-group">
@@ -36,6 +36,18 @@
             <span class="icon">💾</span>
             Сохранить в файл
           </button>
+          <button id="load-btn" @click="triggerFileLoad">
+            <span class="icon">📂</span>
+            Загрузить из файла
+          </button>
+          <input
+            type="file"
+            id="file-input"
+            ref="fileInput"
+            @change="handleFileLoad"
+            accept=".json"
+            style="display: none"
+          >
         </div>
 
         <div v-if="warnings.length > 0" id="warnings">
@@ -143,13 +155,16 @@ export default {
         return;
       }
 
-      this.configService.generate(this.url);
+      // Разделяем ссылки по новой строке
+      const urls = this.url.split('\n').filter(line => line.trim() !== '');
+      
+      this.configService.generateMultiple(urls);
 
       this.output = this.configService.currentOutput;
       this.warnings = this.configService.currentWarnings;
 
       if (this.configService.hasConfig()) {
-        this.setStatus('success', 'Конфигурация сгенерирована');
+        this.setStatus('success', `Сгенерировано ${urls.length} конфиг(ов)`);
       } else {
         this.setStatus('error', 'Ошибка генерации');
         this.output = '';
@@ -162,6 +177,35 @@ export default {
      */
     handleSave() {
       this.configService.saveToFile();
+    },
+
+    /**
+     * Trigger file input click
+     */
+    triggerFileLoad() {
+      this.$refs.fileInput.click();
+    },
+
+    /**
+     * Handle file load
+     * @param {Event} event - File input change event
+     */
+    async handleFileLoad(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const result = await this.configService.loadFromFile(file);
+      
+      if (result.success) {
+        this.output = this.configService.currentOutput;
+        this.warnings = this.configService.currentWarnings;
+        this.setStatus('success', `Загружено ${result.outboundCount} outbound(ов)`);
+      } else {
+        this.setStatus('error', result.error);
+      }
+      
+      // Очищаем input для возможности повторной загрузки того же файла
+      event.target.value = '';
     },
 
     /**
@@ -293,6 +337,30 @@ input[type="text"]::placeholder {
   opacity: 0.7;
 }
 
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: var(--transition);
+  resize: vertical;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+}
+
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 .button-group {
   display: flex;
   gap: 0.75rem;
@@ -340,6 +408,17 @@ button .icon {
   background: var(--text-secondary);
   cursor: not-allowed;
   transform: none;
+}
+
+#load-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+#load-btn:hover {
+  background: var(--border-color);
+  transform: translateY(-1px);
 }
 
 #warnings {

@@ -34,7 +34,8 @@ export class VlessTrojanParser extends BaseParser {
         const params = new URLSearchParams(parsedUrl.search);
 
         const warnings = this.generateWarnings(protocol, port);
-        const outbound = this.createOutbound(protocol, address, port, userInfo, params);
+        const tag = this.extractTag(params, parsedUrl.hash);
+        const outbound = this.createOutbound(protocol, address, port, userInfo, params, tag);
         const config = this.createConfig([outbound]);
 
         return {
@@ -43,6 +44,33 @@ export class VlessTrojanParser extends BaseParser {
             success: true,
             error: null
         };
+    }
+
+    /**
+     * Extract tag from URL parameters and hash
+     * @private
+     * @param {URLSearchParams} params - URL parameters
+     * @param {string} hash - URL hash fragment
+     * @returns {string} Tag for outbound
+     */
+    extractTag(params, hash) {
+        // Сначала пробуем использовать hash (заголовок ссылки) для читаемости
+        if (hash && hash.length > 1) {
+            try {
+                return decodeURIComponent(hash.substring(1));
+            } catch (e) {
+                return hash.substring(1);
+            }
+        }
+
+        // Если hash нет, используем sid
+        const sid = params.get('sid');
+        if (sid) {
+            return sid;
+        }
+
+        // По умолчанию используем стандартный tag
+        return 'vless-reality';
     }
 
     /**
@@ -68,11 +96,12 @@ export class VlessTrojanParser extends BaseParser {
      * @param {number} port - Server port
      * @param {string} userInfo - User information from URL
      * @param {URLSearchParams} params - URL parameters
+     * @param {string} tag - Outbound tag
      * @returns {Object} Protocol outbound
      */
-    createOutbound(protocol, address, port, userInfo, params) {
+    createOutbound(protocol, address, port, userInfo, params, tag) {
         const baseOutbound = {
-            tag: 'vless-reality',
+            tag,
             protocol,
             settings: {}
         };
