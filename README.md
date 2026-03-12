@@ -105,24 +105,6 @@ npm run build
 └── vite.config.js
 ```
 
-## Architecture
-
-### Design Patterns
-
-| Pattern | Implementation |
-|---------|---------------|
-| **Strategy** | `BaseParser` + concrete parsers |
-| **Factory** | `ParserFactory` creates parsers |
-| **Singleton** | `ThemeService.getInstance()` |
-| **Observer** | `NotificationService.subscribe()` |
-| **Facade** | `ConfigService` unifies services |
-
-### SOLID Principles
-
-- **Single Responsibility**: Each class has one purpose
-- **Dependency Injection**: Services injected into components
-- **Encapsulation**: Private fields with `#` syntax
-
 ## License
 
 MIT

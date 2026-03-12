@@ -154,7 +154,159 @@ Adapted specialized agent system for working with JavaScript web projects.
 
 ---
 
-### 4. Doc Writer Agent
+### 4. Security Agent
+
+**Role:** Security and dependency vulnerability auditor
+
+**Expertise:**
+- Static Application Security Testing (SAST)
+- Dependency vulnerability scanning (npm audit)
+- OWASP Top 10 vulnerabilities
+- Secure coding practices
+- Input validation and sanitization
+- XSS, CSRF, SQL Injection prevention
+- Security headers and CSP
+- Secret detection (API keys, tokens)
+- Supply chain security
+
+**When to use:**
+- Before production releases
+- After adding new dependencies
+- When handling user input
+- For security audits
+- After security incident reports
+- Periodic security reviews
+
+**Activation commands:**
+```
+/security <target>
+@security audit dependencies
+@security scan src/
+@security check for XSS vulnerabilities
+@security analyze user input handling
+```
+
+**Security audit checklist:**
+
+| Category | Check | Tool/Method | Status |
+|----------|-------|-------------|--------|
+| 🔴 Dependencies | No known CVEs | `npm audit` | ☐ |
+| 🔴 Dependencies | No malicious packages | `npm audit` | ☐ |
+| 🟠 Input Validation | All user inputs sanitized | Code review | ☐ |
+| 🟠 XSS Prevention | No innerHTML with user data | Code review | ☐ |
+| 🟠 CSRF Protection | State-changing actions protected | Code review | ☐ |
+| 🟡 Secrets | No hardcoded secrets | Grep/search | ☐ |
+| 🟡 CSP | Content Security Policy headers | Config review | ☐ |
+| 🟢 HTTPS | Secure transport enforced | Config review | ☐ |
+| 🟢 Errors | No sensitive data in errors | Code review | ☐ |
+
+**Automated security checks:**
+```bash
+# Audit dependencies for vulnerabilities
+npm audit
+
+# Audit with detailed output
+npm audit --audit-level=moderate
+
+# Fix auto-fixable vulnerabilities
+npm audit fix
+
+# Force update for security fixes
+npm audit fix --force
+
+# Check for outdated packages
+npm outdated
+
+# Verify package integrity
+npm ci --ignore-scripts
+```
+
+**Manual security review areas:**
+
+1. **User Input Handling**
+   - URL parsing (`new URL()`, `URLSearchParams`)
+   - File uploads
+   - Form data
+   - Query parameters
+
+2. **DOM Operations**
+   - `innerHTML`, `outerHTML` usage
+   - `document.write()` calls
+   - Dynamic script injection
+   - Event handler attributes
+
+3. **Network Security**
+   - HTTPS enforcement
+   - Certificate validation
+   - CORS configuration
+   - Request/response headers
+
+4. **Data Storage**
+   - localStorage sensitivity
+   - Cookie security flags
+   - Session management
+
+5. **Dependency Tree**
+   - Direct dependencies
+   - Transitive dependencies
+   - Development dependencies
+
+**Report format:**
+```markdown
+# Security Audit Report
+
+## Executive Summary
+- **Risk Level:** [Critical/High/Medium/Low]
+- **Total Issues:** X
+- **Critical:** Y | **High:** Z | **Medium:** W
+
+## Dependency Vulnerabilities
+
+### [CVE-XXXX-XXXX] Package Name
+- **Severity:** [Critical/High/Medium/Low]
+- **Vulnerable Version:** < X.X.X
+- **Patched Version:** >= Y.Y.Y
+- **Recommendation:** `npm update package-name`
+
+## Code Vulnerabilities
+
+### [SEVERITY] Issue Title
+- **Location:** `file:line`
+- **Type:** [XSS/CSRF/Injection/etc.]
+- **Description:** ...
+- **Impact:** ...
+- **CVSS Score:** X.X
+- **Remediation:** ...
+
+## Supply Chain Analysis
+- Total dependencies: X
+- Direct: Y | Transitive: Z
+- Unmaintained packages: N
+- Packages without repository: M
+
+## Security Score
+| Category | Score | Max |
+|----------|-------|-----|
+| Dependencies | X | 10 |
+| Code Quality | Y | 10 |
+| Configuration | Z | 10 |
+| **Total** | **T** | **30** |
+
+## Action Items
+1. [ ] Critical: Fix CVE-XXXX-XXXX
+2. [ ] High: Sanitize user input in file.js
+3. [ ] Medium: Update dependency X
+```
+
+**Security thresholds:**
+- **Critical vulnerabilities:** 0 tolerance
+- **High vulnerabilities:** Must be fixed before release
+- **Medium vulnerabilities:** Document and schedule fix
+- **Low vulnerabilities:** Track in backlog
+
+---
+
+### 5. Doc Writer Agent
 
 **Role:** Technical documentation specialist
 
@@ -215,7 +367,7 @@ function functionName(param1, optionalParam) {
 
 ---
 
-### 5. Doc Reviewer Agent
+### 6. Doc Reviewer Agent
 
 **Role:** Documentation quality assurance
 
@@ -284,9 +436,10 @@ npm test
 1. @architect — design solution
 2. @builder — implement code
 3. @reviewer — review code
-4. @docwriter — write documentation
-5. @docreviewer — validate documentation
-6. Commit with artifacts
+4. @security — security audit (if handling user input or new dependencies)
+5. @docwriter — write documentation
+6. @docreviewer — validate documentation
+7. Commit with artifacts
 ```
 
 ### Pattern 2: Module Refactoring
@@ -320,6 +473,30 @@ npm test
 5. Commit
 ```
 
+### Pattern 5: Security Audit
+
+```
+1. @security — full security audit
+2. @security audit dependencies (npm audit)
+3. @security scan codebase for vulnerabilities
+4. @builder — fix critical/high issues
+5. @reviewer — verify fixes
+6. @security — re-audit
+7. Commit with security report
+```
+
+### Pattern 6: Pre-Release Checklist
+
+```
+1. @reviewer — code quality review
+2. @security — security audit
+3. @docreviewer — documentation check
+4. Build: npm run build
+5. Lint: npm run lint
+6. Tests: npm test
+7. Release
+```
+
 ---
 
 ## 🧪 Quality Gates
@@ -334,6 +511,7 @@ All changes must pass:
 | Tests | All tests pass | `npm test` |
 | Docs | JSDoc complete | Manual review |
 | Review | Approved by reviewer | @reviewer sign-off |
+| Security | No critical/high vulnerabilities | `npm audit`, @security audit |
 
 ---
 
@@ -362,6 +540,7 @@ Artifacts:
 /architect <task>
 /builder <task>
 /review <code>
+/security <audit>
 /docs <task>
 /doc-review <documentation>
 ```
@@ -371,6 +550,8 @@ Artifacts:
 @architect design system for X
 @builder implement function Y
 @reviewer check this code: <code>
+@security audit dependencies
+@security scan for vulnerabilities
 @docwriter write documentation for Z
 @docreviewer validate documentation
 ```
@@ -391,6 +572,8 @@ Artifacts:
 | Doc Coverage | % documented APIs | 100% |
 | Test Coverage | % test coverage | >80% |
 | Build Success | % successful builds | 100% |
+| Security Score | % passed security checks | 100% |
+| Vulnerability Fix Time | Time to fix critical issues | <24h |
 
 ---
 
@@ -413,7 +596,11 @@ After each task:
 - [JSDoc Documentation](https://jsdoc.app/)
 - [npm Documentation](https://docs.npmjs.com/)
 - [Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [npm Audit Documentation](https://docs.npmjs.com/cli/commands/npm-audit)
+- [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories)
+- [Snyk Vulnerability Database](https://snyk.io/vuln)
 
 ---
 
-*Version: 1.0 | Adapted for XKeen-Config-Generator | 2026-03-08*
+*Version: 1.1 | Adapted for XKeen-Config-Generator | 2026-03-12*
