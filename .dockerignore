@@ -3,7 +3,6 @@ node_modules
 npm-debug.log
 yarn-error.log
 yarn.lock
-package-lock.json
 
 # Build output
 dist
@@ -29,17 +28,13 @@ Thumbs.db
 Dockerfile
 docker-compose*.yml
 .dockerignore
-traefik.yml
-dynamic.yml
 
 # CI/CD
 .github
 .gitlab-ci.yml
 
 # Documentation
-*.md
-!README.md
-docs
+!docs
 AGENTS.md
 QWEN.md
 
