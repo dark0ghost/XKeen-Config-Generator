@@ -1,6 +1,8 @@
 import { VmessParser } from './VmessParser.js';
 import { VlessTrojanParser } from './VlessTrojanParser.js';
 import { ShadowsocksParser } from './ShadowsocksParser.js';
+import { Hysteria2Parser } from './Hysteria2Parser.js';
+import { SocksParser } from './SocksParser.js';
 
 /**
  * Factory class for creating URL parsers (Factory pattern)
@@ -10,7 +12,9 @@ export class ParserFactory {
         this.parsers = [
             new VmessParser(),
             new VlessTrojanParser(),
-            new ShadowsocksParser()
+            new ShadowsocksParser(),
+            new Hysteria2Parser(),
+            new SocksParser()
         ];
     }
 

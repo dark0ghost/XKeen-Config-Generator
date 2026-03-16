@@ -308,8 +308,18 @@
                 </div>
                 <div class="protocol-card">
                     <h4>Shadowsocks</h4>
-                    <p>Classic proxy protocol</p>
+                    <p>Classic proxy protocol (SIP002 + Legacy)</p>
                     <code>ss://...</code>
+                </div>
+                <div class="protocol-card">
+                    <h4>Hysteria2</h4>
+                    <p>High-performance protocol based on QUIC</p>
+                    <code>hysteria2://...</code>
+                </div>
+                <div class="protocol-card">
+                    <h4>SOCKS</h4>
+                    <p>Universal proxy protocol</p>
+                    <code>socks://...</code>
                 </div>
             </div>
 
@@ -326,6 +336,12 @@
 
             <h3>Shadowsocks</h3>
             <div class="example">ss://base64(method:password)@host:port#Label</div>
+
+            <h3>Hysteria2</h3>
+            <div class="example">hysteria2://password@host:port?security=tls&sni=...&obfs=salamander#Label</div>
+
+            <h3>SOCKS</h3>
+            <div class="example">socks://base64(username:password)@host:port#Label</div>
 
             <h2>💡 Tips</h2>
 

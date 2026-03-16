@@ -2,6 +2,7 @@ import { BaseParser } from './BaseParser.js';
 
 /**
  * Parser for Shadowsocks protocol URLs
+ * Supports SIP002 and Legacy formats as per v2rayNG specification
  */
 export class ShadowsocksParser extends BaseParser {
     /**
@@ -16,38 +17,47 @@ export class ShadowsocksParser extends BaseParser {
      */
     parse(url) {
         // Shadowsocks URL может быть в двух форматах:
-        // 1. ss://base64(method:password)@host:port#label
-        // 2. ss://method:password@host:port#label (редко)
-        
+        // 1. SIP002: ss://base64(method:password)@host:port#label
+        // 2. Legacy: ss://base64(method:password@host:port)#label
+
         const hashIndex = url.indexOf('#');
         let hash = '';
         let urlWithoutHash = url;
-        
+
         if (hashIndex !== -1) {
             hash = url.substring(hashIndex);
             urlWithoutHash = url.substring(0, hashIndex);
         }
-        
-        // Извлекаем base64 часть до @
+
+        // Пытаемся найти @ для SIP002 формата
         const at_index = urlWithoutHash.indexOf('@');
-        if (at_index === -1) {
-            return {
-                config: null,
-                warnings: [],
-                success: false,
-                error: 'Неверный формат ссылки'
-            };
-        }
         
-        const userInfoEncoded = urlWithoutHash.substring(5, at_index); // после "ss://"
+        if (at_index !== -1) {
+            // SIP002 формат: ss://base64(method:password)@host:port
+            return this.parseSip002(urlWithoutHash, hash);
+        } else {
+            // Legacy формат: ss://base64(method:password@host:port)
+            return this.parseLegacy(urlWithoutHash, hash);
+        }
+    }
+
+    /**
+     * Parse SIP002 format: ss://base64(method:password)@host:port#label
+     * @private
+     * @param {string} urlWithoutHash - URL without hash fragment
+     * @param {string} hash - Hash fragment
+     * @returns {ParseResult}
+     */
+    parseSip002(urlWithoutHash, hash) {
+        const at_index = urlWithoutHash.indexOf('@');
+        const userInfoEncoded = urlWithoutHash.substring(5, at_index);
         const hostPart = urlWithoutHash.substring(at_index + 1);
         const [address, portStr] = hostPart.split(':');
         const port = parseInt(portStr, 10);
-        
-        // Декодируем method:password из base64
+
         let method = 'aes-256-gcm';
         let password = '';
-        
+
         try {
             const decoded = atob(userInfoEncoded);
             const colonIndex = decoded.indexOf(':');
@@ -59,9 +69,16 @@ export class ShadowsocksParser extends BaseParser {
             }
         } catch (e) {
             console.error('Error decoding base64:', e);
+            return {
+                config: null,
+                warnings: [],
+                success: false,
+                error: 'Ошибка декодирования base64'
+            };
         }
-        
-        const parsedUrl = new URL(urlWithoutHash + hash);
+
+        const fullUrl = urlWithoutHash + hash;
+        const parsedUrl = new URL(fullUrl);
         const params = new URLSearchParams(parsedUrl.search);
         const tag = this.extractTag(params, parsedUrl.hash);
 
@@ -74,6 +91,61 @@ export class ShadowsocksParser extends BaseParser {
             success: true,
             error: null
         };
+    }
+
+    /**
+     * Parse Legacy format: ss://base64(method:password@host:port)#label
+     * @private
+     * @param {string} urlWithoutHash - URL without hash fragment
+     * @param {string} hash - Hash fragment
+     * @returns {ParseResult}
+     */
+    parseLegacy(urlWithoutHash, hash) {
+        // Декодируем всю строку после ss://
+        let encoded = urlWithoutHash.substring(5);
+        
+        try {
+            let decoded = atob(encoded);
+            
+            // Legacy формат: method:password@host:port
+            const regex = /^(.+?):(.*)@(.+?):(\d+?)\/?$/;
+            const match = decoded.match(regex);
+            
+            if (!match) {
+                return {
+                    config: null,
+                    warnings: [],
+                    success: false,
+                    error: 'Неверный формат legacy ссылки'
+                };
+            }
+            
+            const [, method, password, address, portStr] = match;
+            const port = parseInt(portStr, 10);
+            
+            const fullUrl = urlWithoutHash + hash;
+            const parsedUrl = new URL(fullUrl);
+            const params = new URLSearchParams(parsedUrl.search);
+            const tag = this.extractTag(params, parsedUrl.hash);
+            
+            const outbound = this.createShadowsocksOutbound(address, port, method.toLowerCase(), password, tag);
+            const config = this.createConfig([outbound]);
+            
+            return {
+                config,
+                warnings: [],
+                success: true,
+                error: null
+            };
+        } catch (e) {
+            console.error('Error decoding legacy base64:', e);
+            return {
+                config: null,
+                warnings: [],
+                success: false,
+                error: 'Ошибка декодирования base64 (legacy)'
+            };
+        }
     }
 
     /**

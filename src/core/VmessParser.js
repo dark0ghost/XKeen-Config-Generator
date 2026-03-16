@@ -107,23 +107,25 @@ export class VmessParser extends BaseParser {
 
         if (vmessConfig.tls === 'tls') {
             settings.tlsSettings = {
-                allowInsecure: true,
-                serverName: vmessConfig.sni || '',
-                fingerprint: vmessConfig.fp || ''
+                allowInsecure: vmessConfig.insecure === '1' || vmessConfig.insecure === 'true' ? false : true,
+                serverName: vmessConfig.sni || vmessConfig.host || '',
+                fingerprint: vmessConfig.fp || 'chrome'
             };
         }
 
         switch (vmessConfig.net) {
             case 'ws':
                 settings.wsSettings = {
-                    path: vmessConfig.path || '',
-                    host: vmessConfig.host || ''
+                    path: vmessConfig.path || '/',
+                    headers: {
+                        Host: vmessConfig.host || ''
+                    }
                 };
                 break;
             case 'h2':
                 settings.httpSettings = {
                     host: vmessConfig.host ? vmessConfig.host.split(',') : [],
-                    path: vmessConfig.path || ''
+                    path: vmessConfig.path || '/'
                 };
                 break;
             case 'kcp':
@@ -136,6 +138,12 @@ export class VmessParser extends BaseParser {
                     readBufferSize: 2,
                     writeBufferSize: 2,
                     header: { type: vmessConfig.type || 'none' }
+                };
+                break;
+            case 'grpc':
+                settings.grpcSettings = {
+                    serviceName: vmessConfig.path || 'grpc',
+                    multiMode: vmessConfig.type === 'multi'
                 };
                 break;
         }

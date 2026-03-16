@@ -6,10 +6,12 @@ Web application for generating proxy configurations from URLs (VLESS, VMess, Tro
 
 - Generate configs from proxy URLs
 - Support for multiple protocols:
-  - VLESS (Reality, TLS, WS)
+  - VLESS (Reality, TLS, WS, xhttp)
   - VMess
   - Trojan
-  - Shadowsocks
+  - Shadowsocks (SIP002 + Legacy)
+  - Hysteria2
+  - SOCKS
 - **Multi-language support** (Russian & English)
 - **Built-in documentation** for beginners
 - Dark/Light theme toggle
