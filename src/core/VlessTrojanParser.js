@@ -159,11 +159,12 @@ export class VlessTrojanParser extends BaseParser {
         // TLS settings
         if (security === 'tls' || protocol === 'trojan') {
             const alpn = params.get('alpn');
+            const insecure = params.get('insecure') || params.get('allowInsecure');
             settings.tlsSettings = {
                 alpn: alpn ? alpn.split(',') : [],
                 fingerprint: params.get('fp') || '',
                 serverName: params.get('sni') || '',
-                allowInsecure: true,
+                allowInsecure: insecure === '1' || insecure === 'true',
                 show: false
             };
         }
@@ -186,6 +187,14 @@ export class VlessTrojanParser extends BaseParser {
                 headers: {
                     Host: params.get('host') || ''
                 }
+            };
+        }
+
+        if (network === 'xhttp') {
+            settings.xhttpSettings = {
+                path: params.get('path') || '',
+                host: params.get('host') || '',
+                mode: params.get('mode') || 'auto'
             };
         }
 
