@@ -5,6 +5,8 @@ export { VlessTrojanParser } from './core/VlessTrojanParser.js';
 export { ShadowsocksParser } from './core/ShadowsocksParser.js';
 export { Hysteria2Parser } from './core/Hysteria2Parser.js';
 export { SocksParser } from './core/SocksParser.js';
+export { WireGuardParser } from './core/WireGuardParser.js';
+export { HttpParser } from './core/HttpParser.js';
 export { ParserFactory } from './core/ParserFactory.js';
 
 // Services exports

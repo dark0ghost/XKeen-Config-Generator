@@ -127,7 +127,7 @@ export class ConfigService {
 
         for (const outbound of outbounds) {
             let tag = outbound.tag || 'proxy';
-            let originalTag = tag;
+            const originalTag = tag;
             let counter = 1;
 
             // Делаем tag уникальным если он уже есть

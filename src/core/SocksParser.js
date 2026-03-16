@@ -27,7 +27,7 @@ export class SocksParser extends BaseParser {
             let username = '';
             let password = '';
 
-            // Извлекаем username:password из userInfo (base64 encoded)
+            // Extract username:password from userInfo (base64 encoded)
             if (parsedUrl.username) {
                 try {
                     const decoded = atob(parsedUrl.username);
@@ -38,8 +38,8 @@ export class SocksParser extends BaseParser {
                     } else {
                         username = decoded;
                     }
-                } catch (e) {
-                    // Если не base64, используем как есть
+                } catch {
+                    // If not base64, use as is
                     username = parsedUrl.username;
                 }
             }
@@ -60,7 +60,7 @@ export class SocksParser extends BaseParser {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Ошибка разбора SOCKS ссылки'
+                error: 'Failed to parse SOCKS URL'
             };
         }
     }
@@ -76,7 +76,7 @@ export class SocksParser extends BaseParser {
         if (hash && hash.length > 1) {
             try {
                 return decodeURIComponent(hash.substring(1));
-            } catch (e) {
+            } catch {
                 return hash.substring(1);
             }
         }
@@ -111,7 +111,7 @@ export class SocksParser extends BaseParser {
             ]
         };
 
-        // Добавляем пользователей если есть учетные данные
+        // Add users if credentials exist
         if (username) {
             settings.servers[0].users = [
                 {

@@ -4,10 +4,10 @@
 export class BaseParser {
     /**
      * Parse a proxy URL into configuration
-     * @param {string} url
+     * @param {string} _url
      * @returns {ParseResult}
      */
-    parse(url) {
+    parse(_url) {
         if (new.target === BaseParser) {
             throw new Error('BaseParser is abstract and cannot be instantiated directly');
         }
@@ -16,10 +16,10 @@ export class BaseParser {
 
     /**
      * Check if this parser can handle the given URL
-     * @param {string} url
+     * @param {string} _url
      * @returns {boolean}
      */
-    canParse(url) {
+    canParse(_url) {
         throw new Error('Method "canParse()" must be implemented');
     }
 

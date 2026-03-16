@@ -15,7 +15,7 @@ export class VlessTrojanParser extends BaseParser {
      * @inheritDoc
      */
     parse(url) {
-        // eslint-disable-next-line no-unused-vars
+         
         const regex = /([a-z]+):\/\/([^@]+)@([^:]+):(\d+)/;
         const match = url.match(regex);
 
@@ -24,7 +24,7 @@ export class VlessTrojanParser extends BaseParser {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Неверный формат ссылки'
+                error: 'Invalid URL format'
             };
         }
 
@@ -54,22 +54,22 @@ export class VlessTrojanParser extends BaseParser {
      * @returns {string} Tag for outbound
      */
     extractTag(params, hash) {
-        // Сначала пробуем использовать hash (заголовок ссылки) для читаемости
+        // First try to use hash (URL title) for readability
         if (hash && hash.length > 1) {
             try {
                 return decodeURIComponent(hash.substring(1));
-            } catch (e) {
+            } catch {
                 return hash.substring(1);
             }
         }
 
-        // Если hash нет, используем sid
+        // If no hash, use sid
         const sid = params.get('sid');
         if (sid) {
             return sid;
         }
 
-        // По умолчанию используем стандартный tag
+        // Use default tag
         return 'vless-reality';
     }
 
@@ -83,7 +83,7 @@ export class VlessTrojanParser extends BaseParser {
     generateWarnings(protocol, port) {
         const warnings = [];
         if (port !== 443 && protocol !== 'ss') {
-            warnings.push('⚠️ Рекомендуется использовать порт 443.');
+            warnings.push('⚠️ Port 443 is recommended.');
         }
         return warnings;
     }
@@ -149,7 +149,7 @@ export class VlessTrojanParser extends BaseParser {
      */
     createStreamSettings(protocol, params) {
         const security = params.get('security') || (protocol === 'trojan' ? 'tls' : '');
-        const network = params.get('type') || 'tcp';
+        const network = params.get('type') || params.get('net') || 'tcp';
 
         const settings = {
             network,
@@ -167,6 +167,18 @@ export class VlessTrojanParser extends BaseParser {
                 allowInsecure: insecure === '1' || insecure === 'true',
                 show: false
             };
+
+            // ECH (Encrypted Client Hello) support
+            const ech = params.get('ech');
+            if (ech) {
+                settings.tlsSettings.echConfig = ech;
+            }
+
+            // Pinned certificate SHA256
+            const pcs = params.get('pcs');
+            if (pcs) {
+                settings.tlsSettings.pinnedPeerCertificateChainSha256 = pcs.split(',');
+            }
         }
 
         // Reality settings
@@ -178,24 +190,72 @@ export class VlessTrojanParser extends BaseParser {
                 shortId: params.get('sid') || '',
                 spiderX: params.get('spx') || '/'
             };
+
+            // Post-quantum verification
+            const pqv = params.get('pqv') || params.get('mldsa65Verify');
+            if (pqv) {
+                settings.realitySettings.mldsa65Verify = pqv;
+            }
         }
 
-        // WS settings
-        if (network === 'ws') {
+        // Transport settings
+        switch (network) {
+        case 'ws':
             settings.wsSettings = {
                 path: params.get('path') || '',
                 headers: {
                     Host: params.get('host') || ''
                 }
             };
-        }
-
-        if (network === 'xhttp') {
+            break;
+        case 'grpc':
+            settings.grpcSettings = {
+                serviceName: params.get('serviceName') || params.get('path') || 'grpc',
+                multiMode: params.get('mode') === 'multi',
+                authority: params.get('authority') || ''
+            };
+            break;
+        case 'kcp':
+            settings.kcpSettings = {
+                mtu: 1350,
+                tti: 50,
+                uplinkCapacity: 12,
+                downlinkCapacity: 100,
+                congestion: false,
+                readBufferSize: 2,
+                writeBufferSize: 2,
+                header: { type: params.get('headerType') || 'none' },
+                seed: params.get('seed') || ''
+            };
+            break;
+        case 'http':
+        case 'h3':
+            settings.httpSettings = {
+                host: params.get('host') ? params.get('host').split(',') : [],
+                path: params.get('path') || '/'
+            };
+            break;
+        case 'httpupgrade':
+            settings.httpupgradeSettings = {
+                path: params.get('path') || '/',
+                host: params.get('host') || ''
+            };
+            break;
+        case 'xhttp':
             settings.xhttpSettings = {
                 path: params.get('path') || '',
                 host: params.get('host') || '',
-                mode: params.get('mode') || 'auto'
+                mode: params.get('mode') || 'auto',
+                extra: params.get('xhttpExtra') || ''
             };
+            break;
+        case 'quic':
+            settings.quicSettings = {
+                security: params.get('quicSecurity') || 'none',
+                key: params.get('quicKey') || '',
+                header: { type: params.get('quicHeaderType') || 'none' }
+            };
+            break;
         }
 
         return settings;

@@ -40,7 +40,7 @@ export class Hysteria2Parser extends BaseParser {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Ошибка разбора Hysteria2 ссылки'
+                error: 'Failed to parse Hysteria2 URL'
             };
         }
     }
@@ -56,7 +56,7 @@ export class Hysteria2Parser extends BaseParser {
         if (hash && hash.length > 1) {
             try {
                 return decodeURIComponent(hash.substring(1));
-            } catch (e) {
+            } catch {
                 return hash.substring(1);
             }
         }

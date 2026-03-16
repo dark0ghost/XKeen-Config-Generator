@@ -11,7 +11,7 @@ export class ClipboardService {
         try {
             await navigator.clipboard.writeText(text);
             return true;
-        } catch (err) {
+        } catch {
             // Fallback for older browsers
             return this.#fallbackCopy(text);
         }

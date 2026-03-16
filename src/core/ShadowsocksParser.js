@@ -16,7 +16,7 @@ export class ShadowsocksParser extends BaseParser {
      * @inheritDoc
      */
     parse(url) {
-        // Shadowsocks URL может быть в двух форматах:
+        // Shadowsocks URL can be in two formats:
         // 1. SIP002: ss://base64(method:password)@host:port#label
         // 2. Legacy: ss://base64(method:password@host:port)#label
 
@@ -29,14 +29,14 @@ export class ShadowsocksParser extends BaseParser {
             urlWithoutHash = url.substring(0, hashIndex);
         }
 
-        // Пытаемся найти @ для SIP002 формата
+        // Try to find @ for SIP002 format
         const at_index = urlWithoutHash.indexOf('@');
-        
+
         if (at_index !== -1) {
-            // SIP002 формат: ss://base64(method:password)@host:port
+            // SIP002 format: ss://base64(method:password)@host:port
             return this.parseSip002(urlWithoutHash, hash);
         } else {
-            // Legacy формат: ss://base64(method:password@host:port)
+            // Legacy format: ss://base64(method:password@host:port)
             return this.parseLegacy(urlWithoutHash, hash);
         }
     }
@@ -73,7 +73,7 @@ export class ShadowsocksParser extends BaseParser {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Ошибка декодирования base64'
+                error: 'Base64 decoding error'
             };
         }
 
@@ -82,15 +82,49 @@ export class ShadowsocksParser extends BaseParser {
         const params = new URLSearchParams(parsedUrl.search);
         const tag = this.extractTag(params, parsedUrl.hash);
 
-        const outbound = this.createShadowsocksOutbound(address, port, method, password, tag);
+        // Check for plugin
+        const plugin = params.get('plugin');
+        const pluginOptions = plugin ? this.parsePlugin(plugin) : null;
+
+        const outbound = this.createShadowsocksOutbound(address, port, method, password, tag, pluginOptions);
         const config = this.createConfig([outbound]);
 
         return {
             config,
-            warnings: [],
+            warnings: pluginOptions ? ['⚠️ Plugin detected: ' + pluginOptions.name] : [],
             success: true,
             error: null
         };
+    }
+
+    /**
+     * Parse plugin parameter
+     * @private
+     * @param {string} plugin - Plugin string (e.g., "obfs-local;obfs=http;obfs-host=example.com")
+     * @returns {Object|null} Plugin configuration
+     */
+    parsePlugin(plugin) {
+        try {
+            // Decode URL-encoded string
+            const decoded = decodeURIComponent(plugin);
+
+            // Split by semicolon
+            const parts = decoded.split(';');
+            const name = parts[0];
+            const options = {};
+
+            for (let i = 1; i < parts.length; i++) {
+                const [key, value] = parts[i].split('=');
+                if (key && value) {
+                    options[key] = value;
+                }
+            }
+
+            return { name, options };
+        } catch (e) {
+            console.error('Error parsing plugin:', e);
+            return null;
+        }
     }
 
     /**
@@ -102,10 +136,10 @@ export class ShadowsocksParser extends BaseParser {
      */
     parseLegacy(urlWithoutHash, hash) {
         // Декодируем всю строку после ss://
-        let encoded = urlWithoutHash.substring(5);
+        const encoded = urlWithoutHash.substring(5);
         
         try {
-            let decoded = atob(encoded);
+            const decoded = atob(encoded);
             
             // Legacy формат: method:password@host:port
             const regex = /^(.+?):(.*)@(.+?):(\d+?)\/?$/;
@@ -116,7 +150,7 @@ export class ShadowsocksParser extends BaseParser {
                     config: null,
                     warnings: [],
                     success: false,
-                    error: 'Неверный формат legacy ссылки'
+                    error: 'Invalid legacy URL format'
                 };
             }
             
@@ -143,7 +177,7 @@ export class ShadowsocksParser extends BaseParser {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Ошибка декодирования base64 (legacy)'
+                error: 'Base64 decoding error (legacy)'
             };
         }
     }
@@ -156,28 +190,28 @@ export class ShadowsocksParser extends BaseParser {
      * @returns {string} Tag for outbound
      */
     extractTag(params, hash) {
-        // Сначала пробуем использовать hash (заголовок ссылки) для читаемости
+        // First try to use hash (URL title) for readability
         if (hash && hash.length > 1) {
             try {
                 return decodeURIComponent(hash.substring(1));
-            } catch (e) {
+            } catch {
                 return hash.substring(1);
             }
         }
 
-        // Если hash нет, пробуем sid
+        // If no hash, try sid
         const sid = params.get('sid');
         if (sid) {
             return sid;
         }
 
-        // Если есть параметр remarks, используем его
+        // If remarks parameter exists, use it
         const remarks = params.get('remarks');
         if (remarks) {
             return remarks;
         }
 
-        // По умолчанию используем стандартный tag
+        // Use default tag
         return 'ss';
     }
 
@@ -189,22 +223,31 @@ export class ShadowsocksParser extends BaseParser {
      * @param {string} method - Encryption method
      * @param {string} password - Password
      * @param {string} tag - Outbound tag
+     * @param {Object|null} pluginOptions - Plugin configuration
      * @returns {Object} Shadowsocks outbound
      */
-    createShadowsocksOutbound(address, port, method, password, tag) {
+    createShadowsocksOutbound(address, port, method, password, tag, pluginOptions = null) {
+        const settings = {
+            servers: [
+                {
+                    address,
+                    port,
+                    method,
+                    password
+                }
+            ]
+        };
+
+        // Add plugin support
+        if (pluginOptions) {
+            settings.servers[0].plugin = pluginOptions.name;
+            settings.servers[0].pluginOpts = pluginOptions.options;
+        }
+
         return {
             tag,
             protocol: 'shadowsocks',
-            settings: {
-                servers: [
-                    {
-                        address,
-                        port,
-                        method,
-                        password
-                    }
-                ]
-            }
+            settings
         };
     }
 }

@@ -1,8 +1,11 @@
+import { BaseParser } from './BaseParser.js';
 import { VmessParser } from './VmessParser.js';
 import { VlessTrojanParser } from './VlessTrojanParser.js';
 import { ShadowsocksParser } from './ShadowsocksParser.js';
 import { Hysteria2Parser } from './Hysteria2Parser.js';
 import { SocksParser } from './SocksParser.js';
+import { WireGuardParser } from './WireGuardParser.js';
+import { HttpParser } from './HttpParser.js';
 
 /**
  * Factory class for creating URL parsers (Factory pattern)
@@ -14,7 +17,9 @@ export class ParserFactory {
             new VlessTrojanParser(),
             new ShadowsocksParser(),
             new Hysteria2Parser(),
-            new SocksParser()
+            new SocksParser(),
+            new WireGuardParser(),
+            new HttpParser()
         ];
     }
 
@@ -44,7 +49,7 @@ export class ParserFactory {
                 config: null,
                 warnings: [],
                 success: false,
-                error: 'Протокол не поддерживается'
+                error: 'Protocol not supported'
             };
         }
         return parser.parse(url);
