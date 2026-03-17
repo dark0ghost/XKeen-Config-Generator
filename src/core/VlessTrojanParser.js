@@ -128,8 +128,6 @@ export class VlessTrojanParser extends BaseParser {
                     port,
                     password: userInfo,
                     flow: params.get('flow') || '',
-                    method: 'chacha20-poly1305',
-                    ota: false,
                     level: 0
                 }
             ];
@@ -160,10 +158,11 @@ export class VlessTrojanParser extends BaseParser {
         if (security === 'tls' || protocol === 'trojan') {
             const alpn = params.get('alpn');
             const insecure = params.get('insecure') || params.get('allowInsecure');
+            const sni = params.get('sni') || address;
             settings.tlsSettings = {
-                alpn: alpn ? alpn.split(',') : [],
-                fingerprint: params.get('fp') || '',
-                serverName: params.get('sni') || '',
+                alpn: alpn ? alpn.split(',') : ['h2', 'http/1.1'],
+                fingerprint: params.get('fp') || 'chrome',
+                serverName: sni,
                 allowInsecure: insecure === '1' || insecure === 'true',
                 show: false
             };
