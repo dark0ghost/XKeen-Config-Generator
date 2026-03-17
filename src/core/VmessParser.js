@@ -149,10 +149,13 @@ export class VmessParser extends BaseParser {
     extractTagFromUrl(params, hash) {
         // First try to use hash (URL title) for readability
         if (hash && hash.length > 1) {
+            const rawTag = hash.substring(1);
             try {
-                return decodeURIComponent(hash.substring(1));
+                // Use decodeURIComponent for proper emoji and Unicode handling
+                return decodeURIComponent(rawTag.replace(/\+/g, '%20'));
             } catch {
-                return hash.substring(1);
+                // If decoding fails, return raw string
+                return rawTag;
             }
         }
 
