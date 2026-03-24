@@ -108,7 +108,7 @@ export class Hysteria2Parser extends BaseParser {
 
         return {
             tag,
-            protocol: 'hysteria2',
+            protocol: 'hysteria',
             settings: {
                 servers: [
                     {
