@@ -136,7 +136,7 @@ export class VlessTrojanParser extends BaseParser {
             ];
         }
 
-        baseOutbound.streamSettings = this.createStreamSettings(protocol, params);
+        baseOutbound.streamSettings = this.createStreamSettings(protocol, address, params);
 
         return baseOutbound;
     }
@@ -145,10 +145,11 @@ export class VlessTrojanParser extends BaseParser {
      * Create stream settings based on parameters
      * @private
      * @param {string} protocol - Protocol name
+     * @param {string} address - Server address for default SNI
      * @param {URLSearchParams} params - URL parameters
      * @returns {Object} Stream settings
      */
-    createStreamSettings(protocol, params) {
+    createStreamSettings(protocol, address, params) {
         const security = params.get('security') || (protocol === 'trojan' ? 'tls' : '');
         const network = params.get('type') || params.get('net') || 'tcp';
 
