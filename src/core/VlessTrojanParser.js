@@ -245,12 +245,7 @@ export class VlessTrojanParser extends BaseParser {
             };
             break;
         case 'xhttp':
-            settings.xhttpSettings = {
-                path: params.get('path') || '',
-                host: params.get('host') || '',
-                mode: params.get('mode') || 'auto',
-                extra: params.get('xhttpExtra') || ''
-            };
+            settings.xhttpSettings = this.createXhttpSettings(params);
             break;
         case 'quic':
             settings.quicSettings = {
@@ -259,6 +254,33 @@ export class VlessTrojanParser extends BaseParser {
                 header: { type: params.get('quicHeaderType') || 'none' }
             };
             break;
+        }
+
+        return settings;
+    }
+
+    /**
+     * Create xhttp settings based on parameters
+     * @private
+     * @param {URLSearchParams} params - URL parameters
+     * @returns {Object} Xhttp settings
+     */
+    createXhttpSettings(params) {
+        const settings = {
+            host: params.get('host') || '',
+            mode: params.get('mode') || 'auto',
+            path: params.get('path') || '/'
+        };
+
+        // Parse extra parameters if extra is provided
+        const extra = params.get('extra');
+        if (extra) {
+            try {
+                settings.extra = JSON.parse(decodeURIComponent(extra));
+            } catch {
+                // If JSON parsing fails, store as string
+                settings.extra = extra;
+            }
         }
 
         return settings;
